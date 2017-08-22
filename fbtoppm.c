@@ -1,3 +1,8 @@
+// Convert 320x240 32bpp framebuffer dump to ppm image
+//
+// Example:
+// ncat -l -p 12345 | ./a.out | ppmtobmp | bmptopnm | pnmtopng > fb0.png
+
 #include <stdio.h>
 #include <stdint.h>
 
