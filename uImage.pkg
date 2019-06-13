@@ -1,0 +1,14 @@
+# mkpkg configuration for booting uImage from upgrade.bin
+
+[header]
+tag=np1380
+ver=0x00000001
+
+[pkg]
+name=uImage
+idx=3
+include=1
+file=uImage
+ver=0x00000001
+dev=/dev/null
+fstype=none
