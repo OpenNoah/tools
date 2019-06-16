@@ -9,6 +9,7 @@ send "nc 192.168.2.1 1234 > /mnt/mmc/upgrade.bin < /dev/null\r"
 expect -ex "#"
 send "sync\r"
 expect -ex "#"
+set timeout 10
 send "umount -l /mnt/mmc\r"
 expect -ex "#"
 send "reboot\r"
