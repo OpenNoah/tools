@@ -1,4 +1,5 @@
 #!/bin/sh -e
+# Control Raspberry Pi GPIOs
 
 # GPIO definitions
 reset=298
