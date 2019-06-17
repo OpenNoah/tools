@@ -34,23 +34,46 @@ struct gpio_t {
 };
 #pragma packed(pop)
 
-int dump_bin(char *pstr, uint32_t v)
+// Mask out known GPIO ports
+uint32_t gpio_mask[4] = {
+	0b00000000000000000000000000000000,
+	0b01110000000001100000000000000000,
+	0b00001000111000111111111100000000,
+	//0b11010001110000111100000011111111,
+	0b11010001110000010100000001110000,	// Matrix keyboard masked
+};
+
+int dump_bin(char *pstr, uint32_t v, uint32_t mask)
 {
+	if (mask == 0)
+		return sprintf(pstr, ESC_BRIGHT_BLACK "----");
 	char *_pstr = pstr;
-	for (uint32_t i = 0; i < 32; i++) {
+	for (uint32_t i = 0; i < 32; i++, v <<= 1, mask <<= 1) {
 		if ((i % 8 == 0) && i != 0)
 			pstr += sprintf(pstr, ESC_RESET ESC_UNDERLINE " " ESC_RESET);
+		if (!(mask & 0x80000000)) {
+			pstr += sprintf(pstr, ESC_BRIGHT_BLACK "-");
+			continue;
+		}
 		pstr += sprintf(pstr, (v & 0x80000000) ? ESC_BRIGHT_WHITE "1"
 							: ESC_BRIGHT_BLACK "0");
-		v <<= 1;
 	}
 	return pstr - _pstr;
 }
 
-int dump_func(char *pstr, uint32_t fun, uint32_t sel, uint32_t dir)
+int dump_func(char *pstr, uint32_t fun, uint32_t sel, uint32_t dir, uint32_t mask)
 {
+	if (mask == 0)
+		return sprintf(pstr, ESC_BRIGHT_BLACK "----");
 	char *_pstr = pstr;
-	for (uint32_t i = 0; i < 32; i++) {
+	for (uint32_t i = 0; i < 32; i++, fun <<= 1, sel <<= 1, dir <<= 1, mask <<= 1) {
+		if ((i % 8 == 0) && i != 0)
+			pstr += sprintf(pstr, ESC_RESET ESC_UNDERLINE " " ESC_RESET);
+		if (!(mask & 0x80000000)) {
+			pstr += sprintf(pstr, ESC_BRIGHT_BLACK "-");
+			continue;
+		}
+
 		const char *s;
 		switch (  !!(fun & 0x80000000) * 4
 			+ !!(sel & 0x80000000) * 2
@@ -70,12 +93,7 @@ int dump_func(char *pstr, uint32_t fun, uint32_t sel, uint32_t dir)
 		case 0b110:
 		case 0b111:	s = ESC_BRIGHT_CYAN   "F"; break;
 		}
-		if ((i % 8 == 0) && i != 0)
-			pstr += sprintf(pstr, ESC_RESET ESC_UNDERLINE " " ESC_RESET);
 		pstr += sprintf(pstr, s);
-		fun <<= 1;
-		sel <<= 1;
-		dir <<= 1;
 	}
 	return pstr - _pstr;
 }
@@ -87,7 +105,7 @@ int gpio_reg_scan(char *pstr, void *apb, uint32_t reg)
 		struct gpio_t *p = apb + GPIO_BASE - APB_BASE + 0x100 * ip;
 		if (ip)
 			pstr += sprintf(pstr, ESC_RESET ESC_UNDERLINE "," ESC_RESET);
-		pstr += dump_bin(pstr, p->RAW[reg].D);
+		pstr += dump_bin(pstr, p->RAW[reg].D, gpio_mask[ip]);
 	}
 	*pstr++ = '\n';
 	return pstr - _pstr;
@@ -104,7 +122,7 @@ void gpio_scan(void *apb)
 			struct gpio_t *p = apb + GPIO_BASE - APB_BASE + 0x100 * ip;
 			if (ip)
 				pstr += sprintf(pstr, ESC_RESET ESC_UNDERLINE "," ESC_RESET);
-			pstr += dump_func(pstr, p->FUN.D, p->SEL.D, p->DIR.D);
+			pstr += dump_func(pstr, p->FUN.D, p->SEL.D, p->DIR.D, gpio_mask[ip]);
 		}
 		*pstr++ = '\n';
 		struct gpio_t *p = 0;
@@ -113,7 +131,7 @@ void gpio_scan(void *apb)
 		printf("%s", first ? "" : ESC_CURSOR_UP(2));
 		printf("%s", buf);
 		first = 0;
-		usleep(10 * 1000);
+		//usleep(10 * 1000);
 	}
 }
 
@@ -133,6 +151,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
+	printf("\033[?25l");
 	gpio_scan(apb);
 
         munmap(apb, 0x01000000);
