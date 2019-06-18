@@ -189,13 +189,13 @@ op:	;
 		p->DIR.C = 1ul << port;
 		break;
 	case FOutput:
-		p->FUN.C = 1ul << port;
-		p->SEL.C = 1ul << port;
-		p->DIR.S = 1ul << port;
 		if (v == 0)
 			p->DAT.C = 1ul << port;
 		else if (v == 1)
 			p->DAT.S = 1ul << port;
+		p->FUN.C = 1ul << port;
+		p->SEL.C = 1ul << port;
+		p->DIR.S = 1ul << port;
 		break;
 	case FInt:
 		p->FUN.C = 1ul << port;
