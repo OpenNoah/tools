@@ -214,11 +214,13 @@ op:	;
 		break;
 	}
 
-	char buf[2][256] = {0};
+	char buf[3][256] = {0};
 	dump_func(buf[0], p->FUN.D, p->SEL.D, p->DIR.D, 0xffffffff);
-	dump_bin(buf[1], p->PIN.D, 0xffffffff);
+	dump_bin(buf[1], p->PE.D, 0xffffffff);
+	dump_bin(buf[2], p->PIN.D, 0xffffffff);
 	printf(	ESC_RESET "FUNC: %s" ESC_RESET "\n"
-		ESC_RESET "PINV: %s" ESC_RESET "\n", buf[0], buf[1]);
+		ESC_RESET "PULL: %s" ESC_RESET "\n"
+		ESC_RESET "PINV: %s" ESC_RESET "\n", buf[0], buf[1], buf[2]);
 
         munmap(apb, 0x01000000);
         close(mem);

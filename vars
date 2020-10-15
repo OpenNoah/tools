@@ -3,3 +3,4 @@
 PATH=$PATH:$HOME/mips/OpenNoah/toolchain/mipsel-linux/bin
 export PKG_CONFIG_PATH=$HOME/mips/OpenNoah/toolchain/mipsel-linux/lib/pkgconfig
 export CFLAGS=-D_FILE_OFFSET_BITS=64
+export ARCH=mips
