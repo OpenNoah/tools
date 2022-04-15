@@ -1,0 +1,5 @@
+# device                dir              type           para      dump fsck
+# 							para = [ro rw aufo defaults]
+none		/tmp		ramfs		defaults					0	0
+/dev/mmcblk0	/mnt/mmc	vfat		defaults,iocharset=cp936,codepage=936,nofail	0	0
+/dev/mmcblk0p1	/mnt/mmc	vfat		defaults,iocharset=cp936,codepage=936,nofail	0	0

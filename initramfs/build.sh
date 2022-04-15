@@ -5,7 +5,7 @@ jobs=12
 if [ ! -e busybox ]; then
 	curl "$busybox_url" | tar jxvf -
 	ln -sfr busybox-* busybox
-	cat defconfig > busybox/.config
+	cat files/defconfig > busybox/.config
 fi
 
 if [ ! -f rootfs/bin/busybox ]; then
@@ -25,8 +25,17 @@ if [ ! -f rootfs/bin/busybox ]; then
 	      rootfs/lib/
 	mipsel-linux-strip rootfs/lib/*.so.*
 
-	# Init script
-	cp init rootfs/
-	chmod a+x rootfs/init
-	ln -sf /init rootfs/sbin/init
+	# Essential directories and files
+	pushd rootfs
+	mkdir -p etc dev sys proc tmp mnt/mmc mnt/root
+	popd
+	cp files/fstab rootfs/etc/
+
+	sudo mknod rootfs/dev/console c 5 1
+	sudo mknod rootfs/dev/null c 1 3
 fi
+
+# Init script
+cp files/init rootfs/
+chmod a+x rootfs/init
+ln -sf /init rootfs/sbin/init

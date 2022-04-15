@@ -25,7 +25,7 @@ pushd $top/linux-new
 make -j$jobs $kargs uImage
 popd
 
-ln -sfr $top/linux-new/arch/mips/boot/uImage.bin uImage
+cp $top/linux-new/arch/mips/boot/uImage.bin uImage
 
 if [ ! -f NoahSplit/mkpkg ]; then
 	pushd NoahSplit
