@@ -21,11 +21,12 @@ if [ ! -f rootfs/bin/busybox ]; then
 	cp -a ../../toolchain/mipsel-linux/mipsel-linux/lib/libc.so* \
 	      ../../toolchain/mipsel-linux/mipsel-linux/lib/libm.so* \
 	      ../../toolchain/mipsel-linux/mipsel-linux/lib/libresolv.so* \
+	      ../../toolchain/mipsel-linux/mipsel-linux/lib/ld.so* \
 	      rootfs/lib/
 	mipsel-linux-strip rootfs/lib/*.so.*
 
 	# Init script
 	cp init rootfs/
 	chmod a+x rootfs/init
-	ln -sf init rootfs/linuxrc
+	ln -sf /init rootfs/sbin/init
 fi
