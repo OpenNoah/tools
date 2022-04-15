@@ -1,0 +1,3 @@
+[submodule "upgrade.bin/NoahSplit"]
+	path = upgrade.bin/NoahSplit
+	url = /home/zhiyb/mips/OpenNoah/tools/upgrade.bin/./NoahSplit

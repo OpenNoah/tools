@@ -1,0 +1,74 @@
+#!/bin/sh
+
+# Mount filesystems
+mount -t proc /proc /proc
+mount -t sysfs sysfs /sys
+mount -t tmpfs tmpfs /dev
+mkdir /dev/pts
+mount -t devpts none /dev/pts
+mount -t debugfs none /sys/kernel/debug
+
+# Populate device nodes
+sysctl -w kernel.hotplug=/sbin/mdev
+mdev -s
+
+sleep 2
+
+# Mount extra filesystems
+mount -a
+
+# Error fallback
+fallback()
+{
+	echo "No valid rootfs found, drop to initramfs shell with telnetd"
+
+	# USB ethernet
+	modprobe jz4740
+	modprobe g_ether
+	ip addr add 192.168.2.2/24 dev usb0
+	ip link set usb0 up
+	ip route add default via 192.168.2.1
+
+	telnetd -l /bin/sh
+	PS1="(initramfs) \w \$ " exec sh
+}
+
+mount_root_bin() {
+	rootimg="$1"
+	[ -e "$rootimg" ] || return
+	pkginfo "$rootimg" | tail -n+2 | while read idx ver dev fs off size crc; do (
+		set -e
+		[ x"$dev" == x"/" ]
+		lo=$(losetup -f)
+		losetup -fo $(($off)) "$rootimg"
+		mount -t ext4 $lo /mnt/root || losetup -d "$lo"
+	) done
+}
+
+# Switch root
+mountpoint -q /mnt/root || mount -t ext4 /mnt/mmc/rootfs.img /mnt/root
+mountpoint -q /mnt/root || mount_root_bin /mnt/mmc/rootfs.bin
+mountpoint -q /mnt/root || mount_root_bin /mnt/mmc/upgrade.bin
+# Cannot mount any rootfs
+mountpoint -q /mnt/root || fallback
+echo "Mountpoints:"
+df -h
+echo "Loop devices:"
+losetup -a
+
+# Check init
+[ -e /mnt/root/bin/busybox-static ] || fallback
+init="$(cat /proc/cmdline | grep -o 'rdinit=[^ ]\+')"
+init="${init#*=}"
+[ x"$init" == x ] && init="/linuxrc"
+[ -e /mnt/root/$init ] || fallback
+# Final confirm
+echo "Press any key in 1 second to abort root switching..."
+unset key
+read -t1 -n1 key
+[ x"$key" == x ] || fallback
+fallback
+
+# Check OK, switch root
+# Apparently this also moves all mount points
+exec switch_root -c /dev/console /mnt/root $init
