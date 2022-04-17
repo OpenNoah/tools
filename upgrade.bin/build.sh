@@ -13,6 +13,7 @@ popd
 
 pushd $top/linux-new
 sed -i "s/CONFIG_INITRAMFS_SOURCE=.*/CONFIG_INITRAMFS_SOURCE=\"${rootfs//\//\\\/}\"/" .config
+make -j$jobs $kargs uImage
 make -j$jobs $kargs modules
 make -j$jobs $kargs modules_install INSTALL_MOD_PATH=$rootfs
 popd
