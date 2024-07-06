@@ -9,26 +9,52 @@ erase_size = 0
 block_size = 0
 
 def write_page(fout, offset, data):
-    # Skip empty pages
-    skip = True
+
+    def write_fout_page(fout, page_ofs, data):
+        fout.seek(page_ofs * block_size)
+        fout.write(data)
+
+    # Special consideration for the first 8 pages (16k / 2048)
+    page_ofs = offset // page_size
+    if page_ofs < 8:
+        # JZ4740 can only boot assuming page size = 2048, oob size = 64
+        # Fill the first 8 pages with fake page size
+        page_ratio = page_size // 2048
+        if page_ofs >= 8 // page_ratio:
+            # Ignore extra pages
+            return
+        for page in range(page_ratio):
+            outdata = data[2048*page : 2048*(page+1)]
+            # Page is valid if one of these three bytes is zero
+            outdata += b'\xff\xff\x00\x00\x00\xff'
+            # Fake ECC data
+            outdata += bytes([0x5a] * (2048 // 512 * 9))
+            # Padding to output page+oob size
+            outdata += bytes([0xff] * (block_size - len(outdata)))
+            # Write to output file
+            write_fout_page(fout, page_ofs * page_ratio + page, outdata)
+        return
+
+    # Skip empty pages, they have already been erased
+    empty = True
     for v in data:
         if v != 0xff:
-            skip = False
+            empty = False
             break
-    if skip:
+    if empty:
         return
+
     # Construct page+oob data
-    if len(data) != page_size:
-        data += bytes([0xff] * (page_size - len(data)))
+    # Padding to page size
+    data += bytes([0xff] * (page_size - len(data)))
     # MTD header
     data += b'\xff\xff\x00\x00\x00\xff'
-    # ECC data
+    # Fake ECC data
     data += bytes([0x5a] * (page_size // 512 * 9))
-    # Padding
-    data += bytes([0xff] * (page_size + oob_size - len(data)))
+    # Padding to page+oob size
+    data += bytes([0xff] * (block_size - len(data)))
     # Write to output file
-    fout.seek((offset // page_size) * block_size)
-    fout.write(data)
+    write_fout_page(fout, page_ofs, data);
 
 def copy_to_dump(fout, pkg_data):
     if not pkg_data["include"]:
