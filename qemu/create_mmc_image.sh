@@ -4,6 +4,7 @@ out=mmc.bin
 out_qcow2=mmc.qcow2
 
 # Create sparse image file
+rm -f $out
 touch $out
 truncate -s 4G $out
 
@@ -28,5 +29,5 @@ umount mnt
 rmdir mnt
 /sbin/losetup -d $lo
 
-# Convert to qcow2
+# (Optional) Convert to qcow2
 qemu-img convert -f raw -O qcow2 $out $out_qcow2

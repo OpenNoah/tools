@@ -2,3 +2,4 @@ fbtoppm
 reg
 jzmon
 gpio
+__pycache__
