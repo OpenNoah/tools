@@ -1,5 +1,5 @@
 #!/bin/bash -x
-src=upgrade.bin
+src=$1 #upgrade.bin
 pkg=upgrade.pkg
 nand=nand_dump_oob.bin
 qcow2=nand_dump_oob.qcow2
